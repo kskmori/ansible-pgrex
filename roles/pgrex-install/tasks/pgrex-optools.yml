@@ -1,0 +1,72 @@
+### Install PG-REX operation tools
+- name: copy PG-REX operation tools to the node
+  copy:
+    src="{{ item }}"
+    dest="/tmp/"
+  with_items:
+    - Net_OpenSSH-0.62-1.el{{ ansible_distribution_major_version }}.x86_64.rpm
+    - IO_Tty-1.11-1.el{{ ansible_distribution_major_version }}.x86_64.rpm
+    - pg-rex_operation_tools_script-1.7.2-1.el{{ ansible_distribution_major_version }}.noarch.rpm
+  register: rc_copy
+
+- name: install PG-REX operation tools
+  yum:
+    name="{{ item.dest }}"
+    update_cache=yes
+    state=present
+  with_items: "{{ rc_copy.results }}"
+
+# net-tools and rsync might not be install on CentOS
+- name: install dependent packages required by pg-rex_operation_tools
+  yum:
+    name="{{ item }}"
+    update_cache=yes
+    state=present
+  with_items:
+    - "net-tools"
+    - "rsync"
+  
+### /etc/pg-rex_tools.conf 
+- name: configure /etc/pg-rex_tools.conf
+  lineinfile:
+    dest=/etc/pg-rex_tools.conf
+    regexp="^{{ item.key }}[ =]"
+    line="{{ item.key }} = {{ item.value }}"
+  with_items:
+    - { key: "D-LAN_IPAddress", value: "{{ DLAN_IP.values() | sort | join(', ') }}" }
+    - { key: "Archive_dir", value: "{{ PGDATA_PREFIX }}/pgarch/arc1" }
+
+
+### Allow ssh login on each nodes via DLAN_IP
+- name: generate ssh-keys
+  user:
+    name=root
+    generate_ssh_key=yes
+    state=present
+
+- name: fetch ssh public-keys for each nodes to local temporally
+  fetch:
+    src: "/root/.ssh/id_rsa.pub"
+    dest: "{{ role_path }}/files/ssh-pubkeys"
+  changed_when: false
+
+- name: add ssh public-keys to authorized_keys each other
+  authorized_key:
+    user=root
+    key="{{ lookup('file', role_path + '/files/ssh-pubkeys/' + item + '/root/.ssh/id_rsa.pub') }}"
+    manage_dir=yes
+  with_items: "{{ ansible_play_hosts }}"
+
+- name: add host-keys to known_hosts each other
+  lineinfile:
+    dest="/root/.ssh/known_hosts"
+    regexp="^{{ DLAN_IP[item] }}"
+    line="{{ DLAN_IP[item] }} ssh-rsa {{ hostvars[item].ansible_ssh_host_key_rsa_public }}"
+    create=yes
+    backup=yes
+  with_items: "{{ ansible_play_hosts }}"
+
+- name: remove copied public-keys in local
+  local_action: file name="{{ role_path }}/files/ssh-pubkeys" state=absent
+  run_once: true
+  changed_when: false

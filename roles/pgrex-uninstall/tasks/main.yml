@@ -1,0 +1,22 @@
+---
+# TODO: stop services
+
+- name: uninstall PostgreSQL packages
+  yum: name="postgresql95-*" state=absent
+
+
+# remove customized file under postgres user
+- file: path=/var/lib/pgsql/.bash_profile state=absent
+- file: path=/var/lib/pgsql/.pgpass state=absent
+
+- name: uninstall PG-REX operation tools
+  yum: name="{{ item }}" state=absent
+  with_items:
+    - Net_OpenSSH
+    - IO_Tty
+    - pg-rex_operation_tools_script
+
+# drop DB only when DROP_DB is set to true
+- name: drop the database
+  file: path={{ PGDATA_PREFIX }} state=absent
+  when: "{{ DROP_DB }} | bool"

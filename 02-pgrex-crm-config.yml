@@ -1,0 +1,7 @@
+- hosts: pgrex-cluster
+  user: root
+  # １台でもタスクが失敗したらそこで全て中断する。
+  max_fail_percentage: 0
+
+  roles:
+    - pgrex-crm-config

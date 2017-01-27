@@ -1,0 +1,27 @@
+---
+- hosts: pgrex-cluster
+  user: root
+  # １台でもタスクが失敗したらそこで全て中断する。
+  max_fail_percentage: 0
+
+  # The database will be preserved by default
+  # specify -e DROP_DB=true to remove everything
+  vars:
+    DROP_DB: false
+
+  # 実行前にプロンプトを表示し"y"が入力されたときだけ実行する。
+  vars_prompt:
+    - name: "uninstall_ok"
+      prompt: |-
+        Uninstall PG-REX and delete configure files.
+        Your database will be preserved by default.
+        If you do want to erase the whole database, add '-e DROP_DB=true' option.
+        continue ? 
+      private: no
+      default: "y"
+      
+
+
+  roles:
+    - { role: pgrex-uninstall,      when: uninstall_ok == "y" }
+

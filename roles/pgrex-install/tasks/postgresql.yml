@@ -1,0 +1,123 @@
+### Install PostgreSQL packages
+
+# Ignore warnings about using yum instead of rpm;
+#   yum can not be used here because it would also erase postgresql95-libs if presented
+#   so it would be always "changed"
+- name: uninstall old version of PostgreSQL
+  shell: rpm -e postgresql-libs
+  register: rpm_rc
+  changed_when: rpm_rc.rc == 0
+  failed_when: false
+
+- name: copy PostgreSQL packages to the node
+  copy:
+    src="{{ item }}"
+    dest="/tmp/"
+  with_fileglob: "postgresql95-*.rhel{{ ansible_distribution_major_version }}.x86_64.rpm"
+  register: rc_copy
+
+- name: install PostgreSQL packages
+  yum:
+    name="{{ item.dest }}"
+    update_cache=yes
+    state=present
+  with_items: "{{ rc_copy.results }}"
+
+
+### Setup postgres user's environment
+- name: add PATH to postgres user environment
+  become: yes
+  become_user: postgres
+  lineinfile:
+    dest="/var/lib/pgsql/.bash_profile"
+    regexp="^export PATH=/usr/pgsql-9.5/bin:\$PATH"
+    line="export PATH=/usr/pgsql-9.5/bin:$PATH"
+    state=present
+
+- name: add PGDATA to postgres user environment
+  become: yes
+  become_user: postgres
+  lineinfile:
+    dest="/var/lib/pgsql/.bash_profile"
+    regexp="^export PGDATA="
+    line="export PGDATA={{ PGDATA }}"
+    state=present
+  
+### Prepare DB directories
+- file: path={{ PGDATA_PREFIX }}/pgdata state=directory owner=postgres group=postgres mode=0755
+- file: path={{ PGDATA_PREFIX }}/pgxlog state=directory owner=postgres group=postgres mode=0755
+- file: path={{ PGDATA_PREFIX }}/pgarch/arc1 state=directory owner=postgres group=postgres mode=0755
+
+
+### Initialize DB and configurations on Master node
+- block:
+### Initialize DB
+  - stat: path={{ PGDATA }}/PG_VERSION
+    register: db_initialized
+  - name: initialize the database
+    shell: . /var/lib/pgsql/.bash_profile && initdb -D {{ PGDATA }} -X /dbfp/pgxlog/pg_xlog --encoding=UTF-8 --no-locale --data-checksums
+    when: not db_initialized.stat.exists
+
+### Configurations for PostgreSQL server
+  - name: configurations of postgresql.conf
+    lineinfile:
+      dest={{ PGDATA }}/postgresql.conf
+      regexp="^{{ item.key }}[ =]"
+      line="{{ item.key }} = {{ item.value }}"
+    with_items:
+      - { key: "listen_addresses", value: "'*'" }
+      - { key: "wal_level", value: "hot_standby" }
+      - { key: "max_wal_senders", value: "4" }
+      - { key: "wal_keep_segments", value: "32" }
+      - { key: "hot_standby", value: "on" }
+      - { key: "max_standby_streaming_delay", value: "-1" }
+      - { key: "max_standby_archive_delay", value: "-1" }
+      - { key: "archive_mode", value: "on" }
+      - { key: "archive_command", value: "'/bin/cp %p {{ PGDATA_PREFIX }}/pgarch/arc1/%f'" }
+      # - { key: "#synchronous_standby_names", value: "''" } ### necessary?
+      - { key: "synchronous_commit", value: "on" }
+      - { key: "restart_after_crash", value: "off" }
+      - { key: "wal_sender_timeout", value: "20s" }
+      - { key: "wal_receiver_status_interval", value: "5s" }
+      - { key: "hot_standby_feedback", value: "on" }
+
+### create a replication user
+  - name: create a replication user
+    shell: . /var/lib/pgsql/.bash_profile && {{ item }}
+    with_items:
+      - pg_ctl -w start
+      - psql -c "\du {{ REPUSER }}" | grep {{ REPUSER }} || psql -c "CREATE ROLE {{ REPUSER }} REPLICATION LOGIN PASSWORD '{{ REPPASSWD }}'"
+      - pg_ctl stop
+    register: repuser_result
+    changed_when: '"CREATE ROLE" in repuser_result.stdout'
+
+  - name: configurations of pg_hba.conf
+    lineinfile:
+      dest={{ PGDATA }}/pg_hba.conf
+      line="host replication {{ REPUSER }} {{ DLAN_IP[item] }}/32 md5"
+    with_items: "{{ ansible_play_hosts }}"
+  
+  become: yes
+  become_user: postgres
+  when: inventory_hostname == ansible_play_hosts[0]
+### end block for Master node
+
+# create .pgpass if not exists
+# file state=touch can not be usable because it always 'changed'
+- stat: path=/var/lib/pgsql/.pgpass
+  register: pgpass
+
+- name: create .pgpass with the given permissions
+  file: path=/var/lib/pgsql/.pgpass owner=postgres group=postgres mode=0600 state={{ "file" if pgpass.stat.exists else "touch" }}
+
+- name: add .pgpass for replication users of VIP
+  lineinfile:
+    dest=/var/lib/pgsql/.pgpass
+    line="{{ VIP_REP['ip'] }}:{{ PGPORT }}:replication:{{ REPUSER }}:{{ REPPASSWD }}"
+
+- name: add .pgpass for replication users of the nodes excluding myself
+  lineinfile:
+    dest=/var/lib/pgsql/.pgpass
+    line="{{ DLAN_IP[item] }}:{{ PGPORT }}:replication:{{ REPUSER }}:{{ REPPASSWD }}"
+  with_items: "{{ ansible_play_hosts }}"
+  when: "'{{ item }}' != '{{ inventory_hostname }}'"

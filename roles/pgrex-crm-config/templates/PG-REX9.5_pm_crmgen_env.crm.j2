@@ -1,0 +1,247 @@
+### Cluster Option ###
+property no-quorum-policy="ignore" \
+	stonith-enabled="true" \
+	startup-fencing="false"
+
+### Resource Defaults ###
+rsc_defaults resource-stickiness="INFINITY" \
+	migration-threshold="1"
+
+### Group Configuration ###
+group master-group \
+	vip-master \
+	vip-rep
+
+### Master/Slave Configuration ###
+ms msPostgresql \
+	pgsql \
+	meta \
+		master-max="1" \
+		master-node-max="1" \
+		clone-max="2" \
+		clone-node-max="1" \
+		notify="true"
+
+### Clone Configuration ###
+clone clnPing \
+	prmPing
+
+clone clnDiskd1 \
+	prmDiskd1
+
+{% if DISKD_DB is defined %}
+clone clnDiskd2 \
+	prmDiskd2
+
+{% endif %}
+### Group Configuration ###
+group grpStonith1 \
+	prmStonith1-1 \
+	prmStonith1-2
+
+group grpStonith2 \
+	prmStonith2-1 \
+	prmStonith2-2
+
+### Fencing Topology ###
+fencing_topology \
+	{{ ansible_play_hosts[0] }}: prmStonith1-1 prmStonith1-2 \
+	{{ ansible_play_hosts[1] }}: prmStonith2-1 prmStonith2-2
+
+### Primitive Configuration ###
+primitive vip-master ocf:heartbeat:IPaddr2 \
+	params \
+		ip="{{ VIP_MASTER['ip'] }}" \
+		nic="{{ VIP_MASTER['nic'] }}" \
+		cidr_netmask="{{ VIP_MASTER['cidr_netmask'] }}" \
+	op start interval="0s" timeout="60s" on-fail="restart" \
+	op monitor interval="10s" timeout="60s" on-fail="restart" \
+	op stop interval="0s" timeout="60s" on-fail="fence"
+
+primitive vip-rep ocf:heartbeat:IPaddr2 \
+	params \
+		ip="{{ VIP_REP['ip'] }}" \
+		nic="{{ VIP_REP['nic'] }}" \
+		cidr_netmask="{{ VIP_REP['cidr_netmask'] }}" \
+	meta \
+		migration-threshold="0" \
+	op start interval="0s" timeout="60s" on-fail="stop" \
+	op monitor interval="10s" timeout="60s" on-fail="restart" \
+	op stop interval="0s" timeout="60s" on-fail="ignore"
+
+primitive vip-slave ocf:heartbeat:IPaddr2 \
+	params \
+		ip="{{ VIP_SLAVE['ip'] }}" \
+		nic="{{ VIP_SLAVE['nic'] }}" \
+		cidr_netmask="{{ VIP_SLAVE['cidr_netmask'] }}" \
+	meta \
+		resource-stickiness="1" \
+	op start interval="0s" timeout="60s" on-fail="restart" \
+	op monitor interval="10s" timeout="60s" on-fail="restart" \
+	op stop interval="0s" timeout="60s" on-fail="fence"
+
+primitive pgsql ocf:heartbeat:pgsql \
+	params \
+		pgctl="/usr/pgsql-9.5/bin/pg_ctl" \
+		psql="/usr/pgsql-9.5/bin/psql" \
+		pgdata="{{ PGDATA }}" \
+		pgdba="postgres" \
+		pgport="{{ PGPORT }}" \
+		pgdb="template1" \
+		rep_mode="sync" \
+		node_list="{{ ansible_play_hosts | join(' ') }}" \
+		master_ip="{{ VIP_REP['ip'] }}" \
+		restore_command="/bin/cp {{ PGDATA_PREFIX }}/pgarch/arc1/%f %p" \
+		repuser="{{ REPUSER }}" \
+		primary_conninfo_opt="keepalives_idle=60 keepalives_interval=5 keepalives_count=5" \
+		stop_escalate="0" \
+		xlog_check_count="0" \
+	op start interval="0s" timeout="300s" on-fail="restart" \
+	op monitor interval="10s" timeout="60s" on-fail="restart" \
+	op monitor role="Master" interval="9s" timeout="60s" on-fail="restart" \
+	op promote interval="0s" timeout="300s" on-fail="restart" \
+	op demote interval="0s" timeout="300s" on-fail="fence" \
+	op notify interval="0s" timeout="60s" \
+	op stop interval="0s" timeout="300s" on-fail="fence"
+
+primitive prmPing ocf:pacemaker:ping \
+	params \
+		name="default_ping_set" \
+		host_list="{{ PING['host_list'] }}" \
+		multiplier="100" \
+		attempts="2" \
+		timeout="2" \
+		debug="true" \
+	op start interval="0s" timeout="60s" on-fail="restart" \
+	op monitor interval="10s" timeout="60s" on-fail="restart" \
+	op stop interval="0s" timeout="60s" on-fail="ignore"
+
+primitive prmDiskd1 ocf:pacemaker:diskd \
+	params \
+		name="diskcheck_status_internal" \
+		device="{{ DISKD_OS['device'] }}" \
+		options="-e" \
+		interval="10" \
+		dampen="2" \
+	op start interval="0s" timeout="60s" on-fail="restart" \
+	op monitor interval="10s" timeout="60s" on-fail="restart" \
+	op stop interval="0s" timeout="60s" on-fail="ignore"
+
+{% if DISKD_DB is defined %}
+primitive prmDiskd2 ocf:pacemaker:diskd \
+	params \
+		name="diskcheck_status" \
+		device="{{ DISKD_DB['device'] }}" \
+		options="-e" \
+		interval="10" \
+		dampen="2" \
+	op start interval="0s" timeout="60s" on-fail="restart" \
+	op monitor interval="10s" timeout="60s" on-fail="restart" \
+	op stop interval="0s" timeout="60s" on-fail="ignore"
+
+{% endif %}
+primitive prmStonith1-1 stonith:external/stonith-helper \
+	params \
+		pcmk_reboot_retries="1" \
+		pcmk_reboot_timeout="40s" \
+		hostlist="{{ ansible_play_hosts[0] }}" \
+		dead_check_target="{{ STONITH_HELPER['dead_check_target'][ansible_play_hosts[0]] }}" \
+		standby_check_command="/usr/sbin/crm_resource -r master-group -W | grep -qi `hostname`" \
+		standby_wait_time="10" \
+		run_online_check="yes" \
+	op start interval="0s" timeout="60s" on-fail="restart" \
+	op stop interval="0s" timeout="60s" on-fail="ignore"
+
+{% if STONITH_DEVICE.type == "external/libvirt" %}
+primitive prmStonith1-2 stonith:external/libvirt \
+	params \
+		pcmk_reboot_timeout="60s" \
+		hostlist="{{ ansible_play_hosts[0] }}" \
+		hypervisor_uri="{{ STONITH_DEVICE['hypervisor_uri'] }}" \
+	op start interval="0s" timeout="60s" on-fail="restart" \
+	op monitor interval="3600s" timeout="60s" on-fail="restart" \
+	op stop interval="0s" timeout="60s" on-fail="ignore"
+
+{% elif STONITH_DEVICE.type == "external/ipmi" %}
+primitive prmStonith1-2 stonith:external/ipmi \
+	params \
+		pcmk_reboot_timeout="60s" \
+		hostname="{{ ansible_play_hosts[0] }}" \
+		ipaddr="{{ STONITH_DEVICE['ipaddr'][ansible_play_hosts[0]] }}" \
+		userid="{{ STONITH_DEVICE['userid'] }}" \
+		passwd="{{ STONITH_DEVICE['passwd'] }}" \
+		interface="lanplus" \
+	op start interval="0s" timeout="60s" on-fail="restart" \
+	op monitor interval="3600s" timeout="60s" on-fail="restart" \
+	op stop interval="0s" timeout="60s" on-fail="ignore"
+
+{% endif %}
+primitive prmStonith2-1 stonith:external/stonith-helper \
+	params \
+		pcmk_reboot_retries="1" \
+		pcmk_reboot_timeout="40s" \
+		hostlist="{{ ansible_play_hosts[1] }}" \
+		dead_check_target="{{ STONITH_HELPER['dead_check_target'][ansible_play_hosts[1]] }}" \
+		standby_check_command="/usr/sbin/crm_resource -r master-group -W | grep -qi `hostname`" \
+		standby_wait_time="10" \
+		run_online_check="yes" \
+	op start interval="0s" timeout="60s" on-fail="restart" \
+	op stop interval="0s" timeout="60s" on-fail="ignore"
+
+{% if STONITH_DEVICE.type == "external/libvirt" %}
+primitive prmStonith2-2 stonith:external/libvirt \
+	params \
+		pcmk_reboot_timeout="60s" \
+		hostlist="{{ ansible_play_hosts[1] }}" \
+		hypervisor_uri="{{ STONITH_DEVICE['hypervisor_uri'] }}" \
+	op start interval="0s" timeout="60s" on-fail="restart" \
+	op monitor interval="3600s" timeout="60s" on-fail="restart" \
+	op stop interval="0s" timeout="60s" on-fail="ignore"
+
+{% elif STONITH_DEVICE.type == "external/ipmi" %}
+primitive prmStonith2-2 stonith:external/ipmi \
+	params \
+		pcmk_reboot_timeout="60s" \
+		hostname="{{ ansible_play_hosts[1] }}" \
+		ipaddr="{{ STONITH_DEVICE['ipaddr'][ansible_play_hosts[1]] }}" \
+		userid="{{ STONITH_DEVICE['userid'] }}" \
+		passwd="{{ STONITH_DEVICE['passwd'] }}" \
+		interface="lanplus" \
+	op start interval="0s" timeout="60s" on-fail="restart" \
+	op monitor interval="3600s" timeout="60s" on-fail="restart" \
+	op stop interval="0s" timeout="60s" on-fail="ignore"
+
+{% endif %}
+### Resource Location ###
+location rsc_location-msPostgresql-1 msPostgresql \
+	rule -INFINITY: not_defined default_ping_set or default_ping_set lt 100 \
+{% if DISKD_DB is defined %}
+	rule -INFINITY: not_defined diskcheck_status or diskcheck_status eq ERROR \
+{% endif %}
+	rule -INFINITY: not_defined diskcheck_status_internal or diskcheck_status_internal eq ERROR
+location rsc_location-vip-slave-2 vip-slave \
+	rule 200: pgsql-status eq HS:sync \
+	rule 100: pgsql-status eq PRI \
+	rule -INFINITY: not_defined pgsql-status \
+	rule -INFINITY: pgsql-status ne HS:sync and pgsql-status ne PRI
+location rsc_location-grpStonith1-3 grpStonith1 \
+	rule -INFINITY: #uname eq {{ ansible_play_hosts[0] }}
+location rsc_location-grpStonith2-4 grpStonith2 \
+	rule -INFINITY: #uname eq {{ ansible_play_hosts[1] }}
+
+### Resource Colocation ###
+colocation rsc_colocation-msPostgresql-clnPing-1 INFINITY: msPostgresql clnPing
+colocation rsc_colocation-msPostgresql-clnDiskd1-2 INFINITY: msPostgresql clnDiskd1
+{% if DISKD_DB is defined %}
+colocation rsc_colocation-msPostgresql-clnDiskd2-3 INFINITY: msPostgresql clnDiskd2
+{% endif %}
+colocation rsc_colocation-master-group-msPostgresql-4 INFINITY: master-group msPostgresql:Master
+
+### Resource Order ###
+order rsc_order-clnPing-msPostgresql-1 0: clnPing msPostgresql symmetrical=false
+order rsc_order-clnDiskd1-msPostgresql-2 0: clnDiskd1 msPostgresql symmetrical=false
+{% if DISKD_DB is defined %}
+order rsc_order-clnDiskd2-msPostgresql-3 0: clnDiskd2 msPostgresql symmetrical=false
+{% endif %}
+order rsc_order-msPostgresql-master-group-4 INFINITY: msPostgresql:promote master-group:start symmetrical=false
+order rsc_order-msPostgresql-master-group-5 0: msPostgresql:demote master-group:stop symmetrical=false
