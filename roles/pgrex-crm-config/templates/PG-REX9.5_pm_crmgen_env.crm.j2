@@ -170,7 +170,7 @@ primitive prmStonith1-2 stonith:external/ipmi \
 		ipaddr="{{ STONITH_DEVICE['ipaddr'][ansible_play_hosts[0]] }}" \
 		userid="{{ STONITH_DEVICE['userid'] }}" \
 		passwd="{{ STONITH_DEVICE['passwd'] }}" \
-		interface="lanplus" \
+		interface="{{ STONITH_DEVICE['interface'] }}" \
 	op start interval="0s" timeout="60s" on-fail="restart" \
 	op monitor interval="3600s" timeout="60s" on-fail="restart" \
 	op stop interval="0s" timeout="60s" on-fail="ignore"
@@ -206,7 +206,7 @@ primitive prmStonith2-2 stonith:external/ipmi \
 		ipaddr="{{ STONITH_DEVICE['ipaddr'][ansible_play_hosts[1]] }}" \
 		userid="{{ STONITH_DEVICE['userid'] }}" \
 		passwd="{{ STONITH_DEVICE['passwd'] }}" \
-		interface="lanplus" \
+		interface="{{ STONITH_DEVICE['interface'] }}" \
 	op start interval="0s" timeout="60s" on-fail="restart" \
 	op monitor interval="3600s" timeout="60s" on-fail="restart" \
 	op stop interval="0s" timeout="60s" on-fail="ignore"

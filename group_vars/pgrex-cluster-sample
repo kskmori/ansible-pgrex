@@ -46,3 +46,4 @@ STONITH_DEVICE:
 #  ipaddr: { "centos73-1": "192.168.99.27", "centos73-2": "192.168.99.28" }
 #  userid: "pacemaker"
 #  passwd: "pacemakerpass"
+#  interface: "lanplus"
