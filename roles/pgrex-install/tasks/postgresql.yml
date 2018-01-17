@@ -13,7 +13,13 @@
   copy:
     src="{{ item }}"
     dest="/tmp/"
-  with_fileglob: "postgresql95-*.rhel{{ ansible_distribution_major_version }}.x86_64.rpm"
+  with_fileglob:
+      # the order is significant - as each rpms will be installed in this order
+      - "postgresql95-libs*.rhel{{ ansible_distribution_major_version }}.x86_64.rpm"
+      - "postgresql95-9.5*.rhel{{ ansible_distribution_major_version }}.x86_64.rpm"
+      - "postgresql95-server*.rhel{{ ansible_distribution_major_version }}.x86_64.rpm"
+      - "postgresql95-docs*.rhel{{ ansible_distribution_major_version }}.x86_64.rpm"
+      - "postgresql95-contrib*.rhel{{ ansible_distribution_major_version }}.x86_64.rpm"
   register: rc_copy
 
 - name: install PostgreSQL packages
