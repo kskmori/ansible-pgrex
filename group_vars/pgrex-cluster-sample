@@ -34,16 +34,16 @@ STONITH_HELPER:
     "centos73-1": "192.168.100.27 192.168.101.27 192.168.102.27 192.168.122.27"
     "centos73-2": "192.168.100.28 192.168.101.28 192.168.102.28 192.168.122.28"
 
-### STONITH device config: choose one according to the environment    
+### STONITH device config: choose one according to the environment
 ## STONITH config example: libvirt
-STONITH_DEVICE:
-  type: "external/libvirt"
-  hypervisor_uri: "qemu+ssh://sanjose/system"
+#STONITH_DEVICE:
+#  type: "external/libvirt"
+#  hypervisor_uri: "qemu+ssh://sanjose/system"
 
 ## STONITH config example: ipmi
-#STONITH_DEVICE:
-#  type: "external/ipmi"
-#  ipaddr: { "centos73-1": "192.168.99.27", "centos73-2": "192.168.99.28" }
-#  userid: "pacemaker"
-#  passwd: "pacemakerpass"
-#  interface: "lanplus"
+STONITH_DEVICE:
+  type: "external/ipmi"
+  ipaddr: { "centos73-1": "192.168.99.27", "centos73-2": "192.168.99.28" }
+  userid: "pacemaker"
+  passwd: "pacemakerpass"
+  interface: "lanplus"
