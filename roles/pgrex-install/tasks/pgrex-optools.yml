@@ -11,7 +11,7 @@
 
 - name: install PG-REX operation tools
   yum:
-    name="{{ item.dest }}"
+    name="{{ item.dest | default(item.path) }}"
     update_cache=yes
     state=present
   with_items: "{{ rc_copy.results }}"
