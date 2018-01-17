@@ -19,4 +19,4 @@
 # drop DB only when DROP_DB is set to true
 - name: drop the database
   file: path={{ PGDATA_PREFIX }} state=absent
-  when: "{{ DROP_DB }} | bool"
+  when: DROP_DB | bool

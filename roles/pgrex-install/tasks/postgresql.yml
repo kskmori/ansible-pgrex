@@ -120,4 +120,4 @@
     dest=/var/lib/pgsql/.pgpass
     line="{{ DLAN_IP[item] }}:{{ PGPORT }}:replication:{{ REPUSER }}:{{ REPPASSWD }}"
   with_items: "{{ ansible_play_hosts }}"
-  when: "'{{ item }}' != '{{ inventory_hostname }}'"
+  when: item != inventory_hostname
