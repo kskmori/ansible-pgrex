@@ -67,6 +67,7 @@
   with_items: "{{ ansible_play_hosts }}"
 
 - name: remove copied public-keys in local
+  become: false
   local_action: file name="{{ role_path }}/files/ssh-pubkeys" state=absent
   run_once: true
   changed_when: false
