@@ -49,7 +49,7 @@
 * (1) PG-REX 環境の構築
   * PG-REX環境の構築とPacemaker設定ファイル(crm設定ファイル)の作成を行います。
 
-  > $ ansible-playbook -i hosts 01-pgrex-install.yml
+  > $ ansible-playbook -i hosts 10-pgrex-install.yml
 
   * Pacemaker設定ファイル(crm設定ファイル)は Masterノードの root ユーザのホームディレクトリに作成されます。
 
@@ -87,3 +87,4 @@
 ## 補足
 
 * playbook のファイル名の数字は単にファイル名のソート順のために付与したもので深い意味はありません。
+* 19-pgrex-crm-config.yml は Pacemaker設定ファイルの再作成のみを行いたい場合に利用できます(通常は 10-pgrex-install.yml を利用するだけで充分です)。
