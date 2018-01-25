@@ -20,3 +20,22 @@
 - name: drop the database
   file: path={{ PGDATA_PREFIX }} state=absent
   when: DROP_DB | bool
+
+### remove firewalld configuration
+- name: check if firewalld is enabled
+  command: firewall-cmd --state
+  changed_when: false
+  failed_when: false
+  register: firewalld_state
+
+- name: remove firewalld configuration for PostgreSQL/replication (permanent)
+  command: firewall-cmd --permanent --remove-service=postgresql
+  register: result
+  changed_when: '"NOT_ENABLED" not in result.stderr'
+  when: firewalld_state.rc == 0
+
+- name: remove firewalld configuration for PostgreSQL/replication (runtime)
+  command: firewall-cmd --remove-service=postgresql
+  register: result
+  changed_when: '"NOT_ENABLED" not in result.stderr'
+  when: firewalld_state.rc == 0

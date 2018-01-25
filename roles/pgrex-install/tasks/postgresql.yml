@@ -127,3 +127,23 @@
     line="{{ DLAN_IP[item] }}:{{ PGPORT }}:replication:{{ REPUSER }}:{{ REPPASSWD }}"
   with_items: "{{ ansible_play_hosts }}"
   when: item != inventory_hostname
+
+
+### allow communitation ports if firewalld is in use
+- name: check if firewalld is enabled
+  command: firewall-cmd --state
+  changed_when: false
+  failed_when: false
+  register: firewalld_state
+
+- name: allow PostgreSQL/replication port through firewalld (permanent)
+  command: firewall-cmd --permanent --add-service=postgresql
+  register: result
+  changed_when: '"ALREADY_ENABLED" not in result.stderr'
+  when: firewalld_state.rc == 0
+
+- name: allow PostgreSQL/replication port through firewalld (runtime)
+  command: firewall-cmd --add-service=postgresql
+  register: result
+  changed_when: '"ALREADY_ENABLED" not in result.stderr'
+  when: firewalld_state.rc == 0
