@@ -4,3 +4,8 @@
     dest=/root/PG-REX9.5_pm_crmgen_env.crm
   when: inventory_hostname == ansible_play_hosts[0]
 
+- name: pm_logconv configuration
+  template:
+    src=pm_logconv.conf.j2
+    dest=/etc/pm_logconv.conf
+  notify: restart pm_logconv

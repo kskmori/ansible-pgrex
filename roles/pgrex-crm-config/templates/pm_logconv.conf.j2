@@ -1,0 +1,20 @@
+#
+# pm_logconv.conf : Config file of pm_logconv for Pacemaker and Corosync
+#
+#
+[Settings]
+#ha_log_path = /var/log/ha-log
+#output_path = /var/log/pm_logconv.out
+#output_logfacility = local2
+#syslogformat = True
+attribute_ping = not_defined default_ping_set or default_ping_set lt 100
+{% if DISKD_DB is defined %}
+attribute_diskd = not_defined diskcheck_status or diskcheck_status eq ERROR
+{% else %}{# leave it as in a sample file #}
+#attribute_diskd = not_defined diskcheck_status or diskcheck_status eq ERROR
+{% endif %}
+attribute_diskd_inner = not_defined diskcheck_status_internal or diskcheck_status_internal eq ERROR
+#logconv_logfacility = daemon
+#logconv_logpriority = info
+act_rsc = vip-master, vip-rep
+
