@@ -82,8 +82,8 @@ primitive vip-slave ocf:heartbeat:IPaddr2 \
 
 primitive pgsql ocf:heartbeat:pgsql \
 	params \
-		pgctl="/usr/pgsql-9.6/bin/pg_ctl" \
-		psql="/usr/pgsql-9.6/bin/psql" \
+		pgctl="/usr/pgsql-10/bin/pg_ctl" \
+		psql="/usr/pgsql-10/bin/psql" \
 		pgdata="{{ PGDATA }}" \
 		pgdba="postgres" \
 		pgport="{{ PGPORT }}" \

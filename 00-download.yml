@@ -4,31 +4,30 @@
   gather_facts: no
 
   tasks:
-    - name: Download PostgreSQL 9.6 packages
+    - name: Download PostgreSQL 10 packages
       get_url:
-        url="https://yum.postgresql.org/9.6/redhat/rhel-7-x86_64/{{ item }}"
+        url="https://yum.postgresql.org/10/redhat/rhel-7-x86_64/{{ item }}"
         dest=./roles/pgrex-install/files/
         timeout=60
       with_items:
-        - postgresql96-libs-9.6.11-1PGDG.rhel7.x86_64.rpm
-        - postgresql96-9.6.11-1PGDG.rhel7.x86_64.rpm
-        - postgresql96-server-9.6.11-1PGDG.rhel7.x86_64.rpm
-        - postgresql96-contrib-9.6.11-1PGDG.rhel7.x86_64.rpm
-        - postgresql96-docs-9.6.11-1PGDG.rhel7.x86_64.rpm
+        - postgresql10-libs-10.6-1PGDG.rhel7.x86_64.rpm
+        - postgresql10-10.6-1PGDG.rhel7.x86_64.rpm
+        - postgresql10-server-10.6-1PGDG.rhel7.x86_64.rpm
+        - postgresql10-contrib-10.6-1PGDG.rhel7.x86_64.rpm
+        - postgresql10-docs-10.6-1PGDG.rhel7.x86_64.rpm
 
-    - name: Download pg-rex96 optools
+    - name: Download pg-rex10 optools
       get_url:
         url="https://osdn.net/frs/redir.php?m=iij&f=%2Fpg-rex%2F{{item.rev}}%2F{{item.package}}"
         dest=./roles/pgrex-install/files/
         timeout=20
       with_items:
-        - { rev: 69268, package: pg-rex96-1.0.4-CentOS7-1.tar.gz }
+        - { rev: 69838, package: pg-rex10-1.0.1-2.tar.gz }
 
-    - name: Extract pg-rex96 packages
+    - name: Extract pg-rex10 packages
       shell: |
         cd ./roles/pgrex-install/files/
-        tar xfvz pg-rex96-1.0.4-CentOS7-1.tar.gz
-        mv pg-rex96-1.0.4-CentOS7-1/*.rpm .
-        rm -rf pg-rex96-1.0.4-CentOS7-1/
+        tar xfvz pg-rex10-1.0.1-2.tar.gz
+        mv pg-rex10-1.0.1-2/*.rpm .
+        rm -rf pg-rex10-1.0.1-2/
       tags: extract
-        

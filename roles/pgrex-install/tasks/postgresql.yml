@@ -15,11 +15,11 @@
     dest="/tmp/"
   with_fileglob:
       # the order is significant - as each rpms will be installed in this order
-      - "postgresql96-libs*.rhel7.x86_64.rpm"
-      - "postgresql96-9.6*.rhel7.x86_64.rpm"
-      - "postgresql96-server*.rhel7.x86_64.rpm"
-      - "postgresql96-docs*.rhel7.x86_64.rpm"
-      - "postgresql96-contrib*.rhel7.x86_64.rpm"
+      - "postgresql10-libs*.rhel7.x86_64.rpm"
+      - "postgresql10-10.*.rhel7.x86_64.rpm"
+      - "postgresql10-server*.rhel7.x86_64.rpm"
+      - "postgresql10-docs*.rhel7.x86_64.rpm"
+      - "postgresql10-contrib*.rhel7.x86_64.rpm"
   register: rc_copy
 
 - name: install PostgreSQL packages
@@ -36,8 +36,8 @@
   become_user: postgres
   lineinfile:
     dest="/var/lib/pgsql/.bash_profile"
-    regexp="^export PATH=/usr/pgsql-9.6/bin:\$PATH"
-    line="export PATH=/usr/pgsql-9.6/bin:$PATH"
+    regexp="^export PATH=/usr/pgsql-10/bin:\$PATH"
+    line="export PATH=/usr/pgsql-10/bin:$PATH"
     state=present
 
 - name: add PGDATA to postgres user environment
@@ -51,7 +51,7 @@
   
 ### Prepare DB directories
 - file: path={{ PGDATA_PREFIX }}/pgdata state=directory owner=postgres group=postgres mode=0755
-- file: path={{ PGDATA_PREFIX }}/pgxlog state=directory owner=postgres group=postgres mode=0755
+- file: path={{ PGDATA_PREFIX }}/pgwal state=directory owner=postgres group=postgres mode=0755
 - file: path={{ PGDATA_PREFIX }}/pgarch/arc1 state=directory owner=postgres group=postgres mode=0755
 
 
@@ -61,7 +61,7 @@
   - stat: path={{ PGDATA }}/PG_VERSION
     register: db_initialized
   - name: initialize the database
-    shell: . /var/lib/pgsql/.bash_profile && initdb -D {{ PGDATA }} -X /dbfp/pgxlog/pg_xlog --encoding=UTF-8 --no-locale --data-checksums
+    shell: . /var/lib/pgsql/.bash_profile && initdb -D {{ PGDATA }} -X /dbfp/pgwal/pg_wal --encoding=UTF-8 --no-locale --data-checksums
     when: not db_initialized.stat.exists
 
 ### Configurations for PostgreSQL server
@@ -73,19 +73,20 @@
     with_items:
       - { key: "listen_addresses", value: "'*'" }
       - { key: "wal_level", value: "replica" }
-      - { key: "max_wal_senders", value: "4" }
+      - { key: "max_wal_senders", value: "10" }
       - { key: "wal_keep_segments", value: "32" }
       - { key: "hot_standby", value: "on" }
       - { key: "max_standby_streaming_delay", value: "-1" }
       - { key: "max_standby_archive_delay", value: "-1" }
-      - { key: "archive_mode", value: "on" }
+      - { key: "archive_mode", value: "always" }
       - { key: "archive_command", value: "'/bin/cp %p {{ PGDATA_PREFIX }}/pgarch/arc1/%f'" }
       # - { key: "#synchronous_standby_names", value: "''" } ### necessary?
       - { key: "synchronous_commit", value: "on" }
       - { key: "restart_after_crash", value: "off" }
       - { key: "wal_sender_timeout", value: "20s" }
-      - { key: "wal_receiver_status_interval", value: "5s" }
+      - { key: "wal_receiver_timeout", value: "20s" }
       - { key: "hot_standby_feedback", value: "on" }
+      - { key: "max_replication_slots", value: "10" }
 
 ### create a replication user
   - name: create a replication user

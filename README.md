@@ -14,10 +14,11 @@ PG-REX は、Pacemaker リポジトリパッケージと PostgreSQL レプリケ
 
 以下のページに記載されているバージョン・手順を Ansible Playbook にしたものです。
 
-* 対象バージョン: [PG-REX9.6 1.0.4] (https://ja.osdn.net/projects/pg-rex/releases/69268)
+* 対象バージョン: [PG-REX10 1.0.1](https://ja.osdn.net/projects/pg-rex/releases/69838)
 
 以前のバージョンを利用する場合は、対応するブランチを checkout して使ってください。
 
+ * PG-REX9.6: ブランチ [branch-pg-rex96](https://github.com/kskmori/ansible-pgrex/tree/branch-pg-rex96)
  * PG-REX9.5: ブランチ [branch-pg-rex95](https://github.com/kskmori/ansible-pgrex/tree/branch-pg-rex95)
 
 ## 前提条件
@@ -33,15 +34,15 @@ PG-REX は、Pacemaker リポジトリパッケージと PostgreSQL レプリケ
     * 配置ディレクトリ: roles/pgrex-install/files/
     * 配置するファイル一覧:
       * [PostgreSQL公式ダウンロードサイト](https://www.postgresql.org/download/)から入手するもの
-        * postgresql96-9.6.*.rhel7.x86_64.rpm
-        * postgresql96-contrib-9.6.*.rhel7.x86_64.rpm
-        * postgresql96-docs-9.6.*.rhel7.x86_64.rpm
-        * postgresql96-libs-9.6.*.rhel7.x86_64.rpm
-        * postgresql96-server-9.6.*.rhel7.x86_64.rpm
+        * postgresql10-10.*.rhel7.x86_64.rpm
+        * postgresql10-contrib-10.*.rhel7.x86_64.rpm
+        * postgresql10-docs-10.*.rhel7.x86_64.rpm
+        * postgresql10-libs-10.*.rhel7.x86_64.rpm
+        * postgresql10-server-10.*.rhel7.x86_64.rpm
       * [PG-REXプロジェクト](https://osdn.net/projects/pg-rex/)から入手するもの
         * IO_Tty-1.11-1.el7.x86_64.rpm
         * Net_OpenSSH-0.62-1.el7.x86_64.rpm
-        * pg-rex_operation_tools_script-1.8.3-1.el7.noarch.rpm
+        * pg-rex_operation_tools_script-10.1-1.el7.noarch.rpm
 
 * [Pacemaker リポジトリパッケージ用 Ansible Playbook](https://github.com/kskmori/ansible-pacemaker)を実行するために必要な準備・ファイルのダウンロードを完了しておくこと。
 * STONITH機能の利用に必要なパッケージのインストールと設定を完了していること。
@@ -81,7 +82,7 @@ PG-REX は、Pacemaker リポジトリパッケージと PostgreSQL レプリケ
   * PG-REX の起動は PG-REX のマニュアルの手順に従います。詳細は PG-REX のマニュアルを参照してください。
   * Master ノードにログインし Master 側を起動します。初回起動時のみ、引数に以下のPacemaker設定ファイルを指定し、Pacemaker設定を反映します。
 
-  >  \# pg-rex_master_start PG-REX9.6_pm_crmgen_env.crm
+  >  \# pg-rex_master_start PG-REX10_pm_crmgen_env.crm
 
   * Master ノードの起動完了後、Slave 側ノードにログインし Slave 側を起動します。
 

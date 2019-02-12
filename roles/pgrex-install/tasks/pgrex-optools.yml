@@ -6,7 +6,7 @@
   with_items:
     - Net_OpenSSH-0.62-1.el7.x86_64.rpm
     - IO_Tty-1.11-1.el7.x86_64.rpm
-    - pg-rex_operation_tools_script-1.8.3-1.el7.noarch.rpm
+    - pg-rex_operation_tools_script-10.1-1.el7.noarch.rpm
   register: rc_copy
 
 - name: install PG-REX operation tools
