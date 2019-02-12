@@ -14,25 +14,34 @@ PG-REX は、Pacemaker リポジトリパッケージと PostgreSQL レプリケ
 
 以下のページに記載されているバージョン・手順を Ansible Playbook にしたものです。
 
-* 対象バージョン: [PG-REX9.5 1.1.0] (https://osdn.net/projects/pg-rex/releases/66221)
+* 対象バージョン: [PG-REX9.6 1.0.4] (https://ja.osdn.net/projects/pg-rex/releases/69268)
+
+以前のバージョンを利用する場合は、対応するブランチを checkout して使ってください。
+
+ * PG-REX9.5: ブランチ [branch-pg-rex95](https://github.com/kskmori/ansible-pgrex/tree/branch-pg-rex95)
 
 ## 前提条件
 
-この　playbook を使うには以下の設定をあらかじめ行っておいてください。
+この　playbook を使うには以下の準備をあらかじめ行っておいてください。
 
-* PostgreSQL 本体および PG-REX 9.5 のツール類のパッケージは別途ダウンロードして以下のディレクトリへ配置しておくこと。
-  * 配置ディレクトリ: roles/pgrex-install/files/
-  * 配置するファイル一覧:
-    * [PostgreSQL公式ダウンロードサイト](https://www.postgresql.org/download/)から入手するもの
-      * postgresql95-9.5.*.rhel7.x86_64.rpm
-      * postgresql95-contrib-9.5.*.rhel7.x86_64.rpm
-      * postgresql95-docs-9.5.*.rhel7.x86_64.rpm
-      * postgresql95-libs-9.5.*.rhel7.x86_64.rpm
-      * postgresql95-server-9.5.*.rhel7.x86_64.rpm
-    * [PG-REXプロジェクト](https://osdn.net/projects/pg-rex/)から入手するもの
-      * IO_Tty-1.11-1.el7.x86_64.rpm
-      * Net_OpenSSH-0.62-1.el7.x86_64.rpm
-      * pg-rex_operation_tools_script-1.7.2-1.el7.noarch.rpm
+* PostgreSQL 本体および PG-REX ツール類のパッケージを別途ダウンロードしておくこと。
+  * 必要なパッケージは以下のコマンドでダウンロードできます。
+
+  > $ ansible-playbook 00-download.yml
+
+  * もしくは以下のファイルを手動でダウンロードし、所定のディレクトリへ配置してください。
+    * 配置ディレクトリ: roles/pgrex-install/files/
+    * 配置するファイル一覧:
+      * [PostgreSQL公式ダウンロードサイト](https://www.postgresql.org/download/)から入手するもの
+        * postgresql96-9.6.*.rhel7.x86_64.rpm
+        * postgresql96-contrib-9.6.*.rhel7.x86_64.rpm
+        * postgresql96-docs-9.6.*.rhel7.x86_64.rpm
+        * postgresql96-libs-9.6.*.rhel7.x86_64.rpm
+        * postgresql96-server-9.6.*.rhel7.x86_64.rpm
+      * [PG-REXプロジェクト](https://osdn.net/projects/pg-rex/)から入手するもの
+        * IO_Tty-1.11-1.el7.x86_64.rpm
+        * Net_OpenSSH-0.62-1.el7.x86_64.rpm
+        * pg-rex_operation_tools_script-1.8.3-1.el7.noarch.rpm
 
 * [Pacemaker リポジトリパッケージ用 Ansible Playbook](https://github.com/kskmori/ansible-pacemaker)を実行するために必要な準備・ファイルのダウンロードを完了しておくこと。
 * STONITH機能の利用に必要なパッケージのインストールと設定を完了していること。
@@ -72,7 +81,7 @@ PG-REX は、Pacemaker リポジトリパッケージと PostgreSQL レプリケ
   * PG-REX の起動は PG-REX のマニュアルの手順に従います。詳細は PG-REX のマニュアルを参照してください。
   * Master ノードにログインし Master 側を起動します。初回起動時のみ、引数に以下のPacemaker設定ファイルを指定し、Pacemaker設定を反映します。
 
-  >  \# pg-rex_master_start PG-REX9.5_pm_crmgen_env.crm
+  >  \# pg-rex_master_start PG-REX9.6_pm_crmgen_env.crm
 
   * Master ノードの起動完了後、Slave 側ノードにログインし Slave 側を起動します。
 

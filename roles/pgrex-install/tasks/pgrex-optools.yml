@@ -4,9 +4,9 @@
     src="{{ item }}"
     dest="/tmp/"
   with_items:
-    - Net_OpenSSH-0.62-1.el{{ ansible_distribution_major_version }}.x86_64.rpm
-    - IO_Tty-1.11-1.el{{ ansible_distribution_major_version }}.x86_64.rpm
-    - pg-rex_operation_tools_script-1.7.2-1.el{{ ansible_distribution_major_version }}.noarch.rpm
+    - Net_OpenSSH-0.62-1.el7.x86_64.rpm
+    - IO_Tty-1.11-1.el7.x86_64.rpm
+    - pg-rex_operation_tools_script-1.8.3-1.el7.noarch.rpm
   register: rc_copy
 
 - name: install PG-REX operation tools
@@ -16,7 +16,7 @@
     state=present
   with_items: "{{ rc_copy.results }}"
 
-# net-tools and rsync might not be install on CentOS
+# some packages might not be installed on CentOS by default
 - name: install dependent packages required by pg-rex_operation_tools
   yum:
     name="{{ item }}"
@@ -25,6 +25,7 @@
   with_items:
     - "net-tools"
     - "rsync"
+    - "lsof"
   
 ### /etc/pg-rex_tools.conf 
 - name: configure /etc/pg-rex_tools.conf
@@ -35,6 +36,8 @@
   with_items:
     - { key: "D-LAN_IPAddress", value: "{{ DLAN_IP.values() | sort | join(', ') }}" }
     - { key: "Archive_dir", value: "{{ PGDATA_PREFIX }}/pgarch/arc1" }
+    - { key: "VIP_SLAVE", value: "enable" }
+    - { key: "DISKD_ResourceID", value: "clnDiskd1{{ (', clnDiskd2') if DISKD_DB is defined else '' }}" }
 
 
 ### Allow ssh login on each nodes via DLAN_IP

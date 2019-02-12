@@ -15,11 +15,11 @@
     dest="/tmp/"
   with_fileglob:
       # the order is significant - as each rpms will be installed in this order
-      - "postgresql95-libs*.rhel{{ ansible_distribution_major_version }}.x86_64.rpm"
-      - "postgresql95-9.5*.rhel{{ ansible_distribution_major_version }}.x86_64.rpm"
-      - "postgresql95-server*.rhel{{ ansible_distribution_major_version }}.x86_64.rpm"
-      - "postgresql95-docs*.rhel{{ ansible_distribution_major_version }}.x86_64.rpm"
-      - "postgresql95-contrib*.rhel{{ ansible_distribution_major_version }}.x86_64.rpm"
+      - "postgresql96-libs*.rhel7.x86_64.rpm"
+      - "postgresql96-9.6*.rhel7.x86_64.rpm"
+      - "postgresql96-server*.rhel7.x86_64.rpm"
+      - "postgresql96-docs*.rhel7.x86_64.rpm"
+      - "postgresql96-contrib*.rhel7.x86_64.rpm"
   register: rc_copy
 
 - name: install PostgreSQL packages
@@ -36,8 +36,8 @@
   become_user: postgres
   lineinfile:
     dest="/var/lib/pgsql/.bash_profile"
-    regexp="^export PATH=/usr/pgsql-9.5/bin:\$PATH"
-    line="export PATH=/usr/pgsql-9.5/bin:$PATH"
+    regexp="^export PATH=/usr/pgsql-9.6/bin:\$PATH"
+    line="export PATH=/usr/pgsql-9.6/bin:$PATH"
     state=present
 
 - name: add PGDATA to postgres user environment
@@ -72,7 +72,7 @@
       line="{{ item.key }} = {{ item.value }}"
     with_items:
       - { key: "listen_addresses", value: "'*'" }
-      - { key: "wal_level", value: "hot_standby" }
+      - { key: "wal_level", value: "replica" }
       - { key: "max_wal_senders", value: "4" }
       - { key: "wal_keep_segments", value: "32" }
       - { key: "hot_standby", value: "on" }

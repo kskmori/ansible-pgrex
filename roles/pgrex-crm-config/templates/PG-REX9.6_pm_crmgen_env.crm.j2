@@ -82,8 +82,8 @@ primitive vip-slave ocf:heartbeat:IPaddr2 \
 
 primitive pgsql ocf:heartbeat:pgsql \
 	params \
-		pgctl="/usr/pgsql-9.5/bin/pg_ctl" \
-		psql="/usr/pgsql-9.5/bin/psql" \
+		pgctl="/usr/pgsql-9.6/bin/pg_ctl" \
+		psql="/usr/pgsql-9.6/bin/psql" \
 		pgdata="{{ PGDATA }}" \
 		pgdba="postgres" \
 		pgport="{{ PGPORT }}" \
@@ -114,7 +114,7 @@ primitive prmPing ocf:pacemaker:ping \
 		debug="true" \
 	op start interval="0s" timeout="60s" on-fail="restart" \
 	op monitor interval="10s" timeout="60s" on-fail="restart" \
-	op stop interval="0s" timeout="60s" on-fail="ignore"
+	op stop interval="0s" timeout="60s" on-fail="fence"
 
 primitive prmDiskd1 ocf:pacemaker:diskd \
 	params \
@@ -125,7 +125,7 @@ primitive prmDiskd1 ocf:pacemaker:diskd \
 		dampen="2" \
 	op start interval="0s" timeout="60s" on-fail="restart" \
 	op monitor interval="10s" timeout="60s" on-fail="restart" \
-	op stop interval="0s" timeout="60s" on-fail="ignore"
+	op stop interval="0s" timeout="60s" on-fail="fence"
 
 {% if DISKD_DB is defined %}
 primitive prmDiskd2 ocf:pacemaker:diskd \
@@ -137,7 +137,7 @@ primitive prmDiskd2 ocf:pacemaker:diskd \
 		dampen="2" \
 	op start interval="0s" timeout="60s" on-fail="restart" \
 	op monitor interval="10s" timeout="60s" on-fail="restart" \
-	op stop interval="0s" timeout="60s" on-fail="ignore"
+	op stop interval="0s" timeout="60s" on-fail="fence"
 
 {% endif %}
 primitive prmStonith1-1 stonith:external/stonith-helper \

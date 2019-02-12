@@ -1,7 +1,7 @@
 - name: make crm configuration
   template:
-    src=PG-REX9.5_pm_crmgen_env.crm.j2
-    dest=/root/PG-REX9.5_pm_crmgen_env.crm
+    src=PG-REX9.6_pm_crmgen_env.crm.j2
+    dest=/root/PG-REX9.6_pm_crmgen_env.crm
   when: inventory_hostname == ansible_play_hosts[0]
 
 - name: pm_logconv configuration
