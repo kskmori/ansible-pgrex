@@ -15,11 +15,11 @@
     dest="/tmp/"
   with_fileglob:
       # the order is significant - as each rpms will be installed in this order
-      - "postgresql10-libs*.rhel7.x86_64.rpm"
-      - "postgresql10-10.*.rhel7.x86_64.rpm"
-      - "postgresql10-server*.rhel7.x86_64.rpm"
-      - "postgresql10-docs*.rhel7.x86_64.rpm"
-      - "postgresql10-contrib*.rhel7.x86_64.rpm"
+      - "postgresql11-libs*.rhel7.x86_64.rpm"
+      - "postgresql11-11.*.rhel7.x86_64.rpm"
+      - "postgresql11-server*.rhel7.x86_64.rpm"
+      - "postgresql11-docs*.rhel7.x86_64.rpm"
+      - "postgresql11-contrib*.rhel7.x86_64.rpm"
   register: rc_copy
 
 - name: install PostgreSQL packages
@@ -36,8 +36,8 @@
   become_user: postgres
   lineinfile:
     dest="/var/lib/pgsql/.bash_profile"
-    regexp="^export PATH=/usr/pgsql-10/bin:\$PATH"
-    line="export PATH=/usr/pgsql-10/bin:$PATH"
+    regexp="^export PATH=/usr/pgsql-11/bin:\$PATH"
+    line="export PATH=/usr/pgsql-11/bin:$PATH"
     state=present
 
 - name: add PGDATA to postgres user environment
@@ -50,9 +50,9 @@
     state=present
   
 ### Prepare DB directories
-- file: path={{ PGDATA_PREFIX }}/pgdata state=directory owner=postgres group=postgres mode=0755
-- file: path={{ PGDATA_PREFIX }}/pgwal state=directory owner=postgres group=postgres mode=0755
-- file: path={{ PGDATA_PREFIX }}/pgarch/arc1 state=directory owner=postgres group=postgres mode=0755
+- file: path={{ PGDATA }} state=directory owner=postgres group=postgres mode=0700
+- file: path={{ PGDATA_PREFIX }}/pgwal/pg_wal state=directory owner=postgres group=postgres mode=0700
+- file: path={{ PGDATA_PREFIX }}/pgarch/arc1 state=directory owner=postgres group=postgres mode=0700
 
 
 ### Initialize DB and configurations on Master node
@@ -61,7 +61,7 @@
   - stat: path={{ PGDATA }}/PG_VERSION
     register: db_initialized
   - name: initialize the database
-    shell: . /var/lib/pgsql/.bash_profile && initdb -D {{ PGDATA }} -X /dbfp/pgwal/pg_wal --encoding=UTF-8 --no-locale --data-checksums
+    shell: . /var/lib/pgsql/.bash_profile && initdb -D {{ PGDATA }} -X {{ PGDATA_PREFIX }}/pgwal/pg_wal --encoding=UTF-8 --no-locale --data-checksums
     when: not db_initialized.stat.exists
 
 ### Configurations for PostgreSQL server

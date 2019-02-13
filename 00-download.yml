@@ -4,17 +4,18 @@
   gather_facts: no
 
   tasks:
-    - name: Download PostgreSQL 10 packages
+    - name: Download PostgreSQL 11 packages
       get_url:
-        url="https://yum.postgresql.org/10/redhat/rhel-7-x86_64/{{ item }}"
+        url="https://yum.postgresql.org/11/redhat/rhel-7-x86_64/{{ item }}"
         dest=./roles/pgrex-install/files/
         timeout=60
       with_items:
-        - postgresql10-libs-10.6-1PGDG.rhel7.x86_64.rpm
-        - postgresql10-10.6-1PGDG.rhel7.x86_64.rpm
-        - postgresql10-server-10.6-1PGDG.rhel7.x86_64.rpm
-        - postgresql10-contrib-10.6-1PGDG.rhel7.x86_64.rpm
-        - postgresql10-docs-10.6-1PGDG.rhel7.x86_64.rpm
+        - postgresql11-libs-11.1-1PGDG.rhel7.x86_64.rpm
+        - postgresql11-11.1-1PGDG.rhel7.x86_64.rpm
+        - postgresql11-server-11.1-1PGDG.rhel7.x86_64.rpm
+        - postgresql11-contrib-11.1-1PGDG.rhel7.x86_64.rpm
+        - postgresql11-docs-11.1-1PGDG.rhel7.x86_64.rpm
+      tags: postgresql
 
     - name: Download pg-rex10 optools
       get_url:
@@ -22,12 +23,13 @@
         dest=./roles/pgrex-install/files/
         timeout=20
       with_items:
-        - { rev: 69838, package: pg-rex10-1.0.1-2.tar.gz }
+        - { rev: 70626, package: pg-rex11-1.0.0-1.tar.gz }
+      tags: pg-rex
 
-    - name: Extract pg-rex10 packages
+    - name: Extract pg-rex11 packages
       shell: |
         cd ./roles/pgrex-install/files/
-        tar xfvz pg-rex10-1.0.1-2.tar.gz
-        mv pg-rex10-1.0.1-2/*.rpm .
-        rm -rf pg-rex10-1.0.1-2/
-      tags: extract
+        tar xfvz pg-rex11-1.0.0-1.tar.gz
+        mv pg-rex11-1.0.0-1/*.rpm .
+        rm -rf pg-rex11-1.0.0-1/
+      tags: pg-rex, extract

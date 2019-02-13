@@ -2,7 +2,7 @@
 # TODO: stop services
 
 - name: uninstall PostgreSQL packages
-  yum: name="postgresql10-*" state=absent
+  yum: name="postgresql11-*" state=absent
 
 
 # remove customized file under postgres user
