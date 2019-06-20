@@ -29,6 +29,13 @@
     state=present
   with_items: "{{ rc_copy.results }}"
 
+# ensure openssl-libs up to date to avoid an issue:
+#  BUG #15576: Missing X509_get_signature_nid symbol causes the standby to fail to start stream replication
+#  https://www.postgresql.org/message-id/e9b40245d957774c871f2bc8aaec84da165e1b7f.camel%40gunduz.org
+- name: ensure openssl-libs up to date
+  yum:
+    name: openssl-libs
+    state: latest
 
 ### Setup postgres user's environment
 - name: add PATH to postgres user environment
