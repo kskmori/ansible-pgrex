@@ -1,13 +1,21 @@
 ### Install PostgreSQL packages
 
-# Ignore warnings about using yum instead of rpm;
-#   yum can not be used here because it would also erase postgresql95-libs if presented
+# make sure an old version of PostgreSQL is absent
+#   ignore warnings about using yum instead of rpm;
+#   yum can not be used here because it would also erase postgresql11-libs if presented
 #   so it would be always "changed"
 - name: uninstall old version of PostgreSQL
   shell: rpm -e postgresql-libs
+  args:
+    warn: false
   register: rpm_rc
   changed_when: rpm_rc.rc == 0
   failed_when: false
+
+- name: make sure the minor revision of PostgreSQL
+  set_fact:
+    pg_rev: '11.4-1PGDG'
+  when: pg_rev is not defined
 
 - name: copy PostgreSQL packages to the node
   copy:
@@ -15,11 +23,11 @@
     dest="/tmp/"
   with_fileglob:
       # the order is significant - as each rpms will be installed in this order
-      - "postgresql11-libs*.rhel7.x86_64.rpm"
-      - "postgresql11-11.*.rhel7.x86_64.rpm"
-      - "postgresql11-server*.rhel7.x86_64.rpm"
-      - "postgresql11-docs*.rhel7.x86_64.rpm"
-      - "postgresql11-contrib*.rhel7.x86_64.rpm"
+      - postgresql11-libs-{{ pg_rev }}.rhel7.x86_64.rpm
+      - postgresql11-{{ pg_rev }}.rhel7.x86_64.rpm
+      - postgresql11-server-{{ pg_rev }}.rhel7.x86_64.rpm
+      - postgresql11-docs-{{ pg_rev }}.rhel7.x86_64.rpm
+      - postgresql11-contrib-{{ pg_rev }}.rhel7.x86_64.rpm
   register: rc_copy
 
 - name: install PostgreSQL packages
@@ -28,6 +36,8 @@
     update_cache=yes
     state=present
   with_items: "{{ rc_copy.results }}"
+  loop_control:
+    label: "{{ item.dest | default(item.path) }}" # to suppress too verbose logs
 
 # ensure openssl-libs up to date to avoid an issue:
 #  BUG #15576: Missing X509_get_signature_nid symbol causes the standby to fail to start stream replication

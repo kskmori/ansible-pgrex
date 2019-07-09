@@ -6,7 +6,7 @@
   with_items:
     - Net_OpenSSH-0.62-1.el7.x86_64.rpm
     - IO_Tty-1.11-1.el7.x86_64.rpm
-    - pg-rex_operation_tools_script-11.0-1.el7.noarch.rpm
+    - pg-rex_operation_tools_script-11.2-1.el7.noarch.rpm
   register: rc_copy
 
 - name: install PG-REX operation tools
@@ -15,6 +15,8 @@
     update_cache=yes
     state=present
   with_items: "{{ rc_copy.results }}"
+  loop_control:
+    label: "{{ item.dest | default(item.path) }}" # to suppress too verbose logs
 
 # some packages might not be installed on CentOS by default
 - name: install dependent packages required by pg-rex_operation_tools

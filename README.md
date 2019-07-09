@@ -14,7 +14,7 @@ PG-REX は、Pacemaker リポジトリパッケージと PostgreSQL レプリケ
 
 以下のページに記載されているバージョン・手順を Ansible Playbook にしたものです。
 
-* 対象バージョン: [PG-REX11 1.0.0](https://ja.osdn.net/projects/pg-rex/releases/70626)
+* 対象バージョン: [PG-REX11 1.1](https://ja.osdn.net/projects/pg-rex/releases/71260)
 
 以前のバージョンを利用する場合は、対応するブランチを checkout して使ってください。
 
@@ -41,9 +41,11 @@ PG-REX は、Pacemaker リポジトリパッケージと PostgreSQL レプリケ
         * postgresql11-libs-11.*.rhel7.x86_64.rpm
         * postgresql11-server-11.*.rhel7.x86_64.rpm
       * [PG-REXプロジェクト](https://osdn.net/projects/pg-rex/)から入手するもの
-        * IO_Tty-1.11-1.el7.x86_64.rpm
-        * Net_OpenSSH-0.62-1.el7.x86_64.rpm
-        * pg-rex_operation_tools_script-11.0-1.el7.noarch.rpm
+        * pg-rex11-1.1-2.tar.gz
+        * 展開してできる以下のファイルを配置する。
+          * IO_Tty-1.11-1.el7.x86_64.rpm
+          * Net_OpenSSH-0.62-1.el7.x86_64.rpm
+          * pg-rex_operation_tools_script-11.2-1.el7.noarch.rpm
 
 * [Pacemaker リポジトリパッケージ用 Ansible Playbook](https://github.com/kskmori/ansible-pacemaker)を実行するために必要な準備・ファイルのダウンロードを完了しておくこと。
 * STONITH機能の利用に必要なパッケージのインストールと設定を完了していること。
@@ -83,7 +85,7 @@ PG-REX は、Pacemaker リポジトリパッケージと PostgreSQL レプリケ
   * PG-REX の起動は PG-REX のマニュアルの手順に従います。詳細は PG-REX のマニュアルを参照してください。
   * Master ノードにログインし Master 側を起動します。初回起動時のみ、引数に以下のPacemaker設定ファイルを指定し、Pacemaker設定を反映します。
 
-  >  \# pg-rex_master_start PG-REX10_pm_crmgen_env.crm
+  >  \# pg-rex_master_start PG-REX11_pm_crmgen_env.crm
 
   * Master ノードの起動完了後、Slave 側ノードにログインし Slave 側を起動します。
 
