@@ -1,4 +1,6 @@
 
-- include: postgresql.yml
+- include_tasks: postgresql.yml
+  tags: always, postgresql
 
-- include: pgrex-optools.yml
+- include_tasks: pgrex-optools.yml
+  tags: always, pgrex-optools

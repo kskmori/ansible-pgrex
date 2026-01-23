@@ -1,8 +1,6 @@
-- hosts: pgrex-cluster
+- hosts: hacluster_pgrex
   become: true
-  # １台でもタスクが失敗したらそこで全て中断する。
   max_fail_percentage: 0
 
   roles:
     - pgrex-install
-    - pgrex-crm-config

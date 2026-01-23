@@ -1,0 +1,8 @@
+- hosts: hacluster_pgrex
+  become: true
+  max_fail_percentage: 0
+
+  roles:
+    - role: pgrex-pm_pcsgen
+      #pcsgen_csv: pm_pcsgen_sample.csv  # mandatory parameter
+      when: inventory_hostname == ansible_play_hosts[0]

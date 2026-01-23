@@ -1,4 +1,0 @@
-- name: restart pm_logconv
-  service:
-    name=pm_logconv
-    state=restarted

@@ -6,46 +6,46 @@
 #   so it would be always "changed"
 - name: uninstall old version of PostgreSQL
   shell: rpm -e postgresql-libs
-  args:
-    warn: false
   register: rpm_rc
   changed_when: rpm_rc.rc == 0
   failed_when: false
 
 - name: make sure the minor revision of PostgreSQL
   set_fact:
-    pg_rev: '11.4-1PGDG'
+    pg_rev: '15.8-1PGDG'
   when: pg_rev is not defined
+- name: extract major version number of PostgreSQL
+  set_fact:
+    pg_major: "{{ pg_rev | regex_replace('^(\\d*)\\..*', '\\1') }}"
+- name: make sure pg_rev format is valid
+  fail:
+    msg: |
+      'pg_rev' format must look like '15.8-1PGDG.rhel8'
+      Hint - the format has been changed so that it must contains rhel revision
+  when: '"rhel" not in pg_rev'
 
 - name: copy PostgreSQL packages to the node
   copy:
     src="{{ item }}"
-    dest="/tmp/"
-  with_fileglob:
+    dest="/var/tmp/"
+  with_items:
       # the order is significant - as each rpms will be installed in this order
-      - postgresql11-libs-{{ pg_rev }}.rhel7.x86_64.rpm
-      - postgresql11-{{ pg_rev }}.rhel7.x86_64.rpm
-      - postgresql11-server-{{ pg_rev }}.rhel7.x86_64.rpm
-      - postgresql11-docs-{{ pg_rev }}.rhel7.x86_64.rpm
-      - postgresql11-contrib-{{ pg_rev }}.rhel7.x86_64.rpm
+      - postgresql{{ pg_major }}-libs-{{ pg_rev }}.x86_64.rpm
+      - postgresql{{ pg_major }}-{{ pg_rev }}.x86_64.rpm
+      - postgresql{{ pg_major }}-server-{{ pg_rev }}.x86_64.rpm
+      - postgresql{{ pg_major }}-docs-{{ pg_rev }}.x86_64.rpm
+      - postgresql{{ pg_major }}-contrib-{{ pg_rev }}.x86_64.rpm
   register: rc_copy
 
 - name: install PostgreSQL packages
   yum:
     name="{{ item.dest | default(item.path) }}"
     update_cache=yes
+    disable_gpg_check=true
     state=present
   with_items: "{{ rc_copy.results }}"
   loop_control:
     label: "{{ item.dest | default(item.path) }}" # to suppress too verbose logs
-
-# ensure openssl-libs up to date to avoid an issue:
-#  BUG #15576: Missing X509_get_signature_nid symbol causes the standby to fail to start stream replication
-#  https://www.postgresql.org/message-id/e9b40245d957774c871f2bc8aaec84da165e1b7f.camel%40gunduz.org
-- name: ensure openssl-libs up to date
-  yum:
-    name: openssl-libs
-    state: latest
 
 ### Setup postgres user's environment
 - name: add PATH to postgres user environment
@@ -53,8 +53,8 @@
   become_user: postgres
   lineinfile:
     dest="/var/lib/pgsql/.bash_profile"
-    regexp="^export PATH=/usr/pgsql-11/bin:\$PATH"
-    line="export PATH=/usr/pgsql-11/bin:$PATH"
+    regexp="^export PATH=/usr/pgsql-{{ pg_major }}/bin:\$PATH"
+    line="export PATH=/usr/pgsql-{{ pg_major }}/bin:$PATH"
     state=present
 
 - name: add PGDATA to postgres user environment
@@ -67,10 +67,9 @@
     state=present
   
 ### Prepare DB directories
-- file: path={{ PGDATA }} state=directory owner=postgres group=postgres mode=0700
-- file: path={{ PGDATA_PREFIX }}/pgwal/pg_wal state=directory owner=postgres group=postgres mode=0700
-- file: path={{ PGDATA_PREFIX }}/pgarch/arc1 state=directory owner=postgres group=postgres mode=0700
-
+- file: path="{{ PGDATA }}" state=directory owner=postgres group=postgres mode=0700
+- file: path="{{ PGDATA_PREFIX }}/pgwal/pg_wal" state=directory owner=postgres group=postgres mode=0700
+- file: path="{{ PGDATA_PREFIX }}/pgarch/arc1" state=directory owner=postgres group=postgres mode=0700
 
 ### Initialize DB and configurations on Master node
 - block:
@@ -89,21 +88,21 @@
       line="{{ item.key }} = {{ item.value }}"
     with_items:
       - { key: "listen_addresses", value: "'*'" }
+      - { key: "password_encryption", value: "scram-sha-256" }
       - { key: "wal_level", value: "replica" }
-      - { key: "max_wal_senders", value: "10" }
-      - { key: "wal_keep_segments", value: "32" }
-      - { key: "hot_standby", value: "on" }
-      - { key: "max_standby_streaming_delay", value: "-1" }
-      - { key: "max_standby_archive_delay", value: "-1" }
+      - { key: "synchronous_commit", value: "on" }
       - { key: "archive_mode", value: "always" }
       - { key: "archive_command", value: "'/bin/cp %p {{ PGDATA_PREFIX }}/pgarch/arc1/%f'" }
-      # - { key: "#synchronous_standby_names", value: "''" } ### necessary?
-      - { key: "synchronous_commit", value: "on" }
-      - { key: "restart_after_crash", value: "off" }
+      - { key: "max_wal_senders", value: "10" }
+      - { key: "wal_keep_size", value: "512MB" }
       - { key: "wal_sender_timeout", value: "20s" }
-      - { key: "wal_receiver_timeout", value: "20s" }
-      - { key: "hot_standby_feedback", value: "on" }
       - { key: "max_replication_slots", value: "10" }
+      - { key: "hot_standby", value: "on" }
+      - { key: "max_standby_archive_delay", value: "-1" }
+      - { key: "max_standby_streaming_delay", value: "-1" }
+      - { key: "hot_standby_feedback", value: "on" }
+      - { key: "wal_receiver_timeout", value: "20s" }
+      - { key: "restart_after_crash", value: "off" }
 
 ### create a replication user
   - name: create a replication user
@@ -118,9 +117,9 @@
   - name: configurations of pg_hba.conf
     lineinfile:
       dest={{ PGDATA }}/pg_hba.conf
-      line="host replication {{ REPUSER }} {{ DLAN_IP[item] }}/32 md5"
+      line="host replication {{ REPUSER }}  {{ hostvars[item].replication_addr }}/32 scram-sha-256"
     with_items: "{{ ansible_play_hosts }}"
-  
+
   become: yes
   become_user: postgres
   when: inventory_hostname == ansible_play_hosts[0]
@@ -137,12 +136,12 @@
 - name: add .pgpass for replication users of VIP
   lineinfile:
     dest=/var/lib/pgsql/.pgpass
-    line="{{ VIP_REP['ip'] }}:{{ PGPORT }}:replication:{{ REPUSER }}:{{ REPPASSWD }}"
+    line="{{ ipaddr_replication.ip }}:{{ PGPORT }}:replication:{{ REPUSER }}:{{ REPPASSWD }}"
 
 - name: add .pgpass for replication users of the nodes excluding myself
   lineinfile:
     dest=/var/lib/pgsql/.pgpass
-    line="{{ DLAN_IP[item] }}:{{ PGPORT }}:replication:{{ REPUSER }}:{{ REPPASSWD }}"
+    line="{{ hostvars[item].replication_addr }}:{{ PGPORT }}:replication:{{ REPUSER }}:{{ REPPASSWD }}"
   with_items: "{{ ansible_play_hosts }}"
   when: item != inventory_hostname
 

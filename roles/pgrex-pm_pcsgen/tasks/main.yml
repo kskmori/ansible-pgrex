@@ -1,0 +1,45 @@
+- name: check parameter variables
+  fail:
+    msg: pcsgen_csv or pcsgen_xlsx variable must be specified to run this role
+  when: pcsgen_csv is not defined and pcsgen_xlsx is not defined
+  tags: always
+
+- name: extract CSV config filename
+  set_fact:
+    pcsgen_csv: "{{ pcsgen_xlsx | splitext | first }}.csv"
+  when: pcsgen_xlsx is defined
+  tags: always
+- name: extract CIB config filename
+  set_fact:
+    pcsgen_basename: "{{ pcsgen_csv | basename }}"
+    pcsgen_cib:  "{{ pcsgen_csv | basename | splitext | first }}.xml"
+  tags: always
+
+- name: TODO when pcsgen_xlsx specified
+  debug:
+    msg: "TODO when pcsgen_xlsx specified, generate csv by LibreOffice"
+    #SOFFICE="/mnt/c/Program Files/LibreOffice/program/soffice.com"
+    #"$SOFFICE" --convert-to csv:"Text - txt - csv (StarCalc):44,34,76,,,,,,true" "$@"
+  when: pcsgen_xlsx is defined
+
+- name: copy pm_pcsgen input file and substitute variables
+  template:
+    src: "{{ pcsgen_csv }}"
+    dest: "/var/tmp/{{ pcsgen_basename }}"
+
+- name: generate PCS/CIB configuration with pm_pcsgen
+  shell: pm_pcsgen {{ pcsgen_basename }}
+  args:
+    chdir: /var/tmp/
+
+### PG-REX: cib-push is done by pg-rex_operation_tools_script
+#- name: make sure Pacemaker is running
+#  command: pcs status cluster
+#  changed_when: false
+#  tags: cib-push
+
+#- name: apply CIB resource configuration to the cluster
+#  shell: pcs cluster cib-push {{ pcsgen_cib }} --config
+#  args:
+#    chdir: /var/tmp/
+#  tags: cib-push

@@ -1,0 +1,79 @@
+all:
+  vars:
+    ### ansible-pacemaker
+    HACLUSTER_PASSWORD: pacemaker
+    CLUSTER_NAME: pgrex_cluster
+    FENCE_AGENTS: [fence_ipmilan]
+
+    ### ansible-postgresql-shared
+    pg_rev: '15.8-1PGDG.rhel8'
+
+    ### ansible-virtualbmc
+    # Hypervisor type
+    VBMC_HYPERVISOR: libvirt
+    #VBMC_HYPERVISOR: vbox
+    # VirtualBMC version tag
+    #VBMC_VERSION: master			# for Development
+    VBMC_VERSION: 2.2.2-fix-master-pid		# for libvirt
+    #VBMC_VERSION: devel-vbox-2.0		# for VirtualBox
+    # virtualenv directory path
+    VBMC_VENV_DIR: ./venv-vbmc
+    # Network interface for IPMI ports
+    VBMC_IPMI_IF: virbr0
+
+
+hacluster:
+  hosts:
+    pgrex01:
+      manage_addr: 192.168.122.31
+      link0_addr:  192.168.101.31
+      link1_addr:  192.168.102.31
+    pgrex02:
+      manage_addr: 192.168.122.32
+      link0_addr:  192.168.101.32
+      link1_addr:  192.168.102.32
+
+### ansible-pgrex examples
+# PG-REX configuration variables
+hacluster_pgrex:
+  children:
+    hacluster:
+  hosts:
+    pgrex01:
+      replication_addr: 192.168.110.31
+    pgrex02:
+      replication_addr: 192.168.110.32
+  vars:
+    PGDATA_PREFIX: /dbfp  
+    PGDATA: /dbfp/pgdata/data
+    PGPORT: 5432
+    REPUSER: repuser
+    REPPASSWD: reppasswd
+    # pm_pcsgen resource configuration
+    # pcsgen_cvs - relative path from ansible-pgrex for running from import_playbook
+    pcsgen_csv: "{{ playbook_dir }}/pm_pcsgen-config/PG-REX15-pm_pcsgen_sample.csv"
+    ipaddr: { ip: 192.168.100.131, nic: enp2s0, cidr_netmask: 24 }
+    ipaddr_standby: { ip: 192.168.100.132, nic: enp2s0, cidr_netmask: 24 }
+    ipaddr_replication: { ip: 192.168.110.131, nic: enp5s0, cidr_netmask: 24 }
+    ping:   { host_list: 192.168.100.1 }
+    storage_mon: { drives: "/dev/vda" }
+    pgsql:
+      pgctl: /usr/pgsql-15/bin/pg_ctl
+      psql:  /usr/pgsql-15/bin/psql
+      pgdata: "{{ PGDATA }}"
+      pgport: "{{ PGPORT }}"
+
+
+
+### ansible-virtualbmc
+hacluster_vbmc:
+  hosts:
+    pgrex01:
+      IPMI_IP:   192.168.199.31
+      IPMI_USER: pacemaker
+      IPMI_PASS: pacemakerpass1
+    pgrex02:
+      IPMI_IP:   192.168.199.32
+      IPMI_USER: pacemaker
+      IPMI_PASS: pacemakerpass1
+
