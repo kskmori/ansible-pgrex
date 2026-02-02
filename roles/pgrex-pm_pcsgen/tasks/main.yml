@@ -25,12 +25,12 @@
 - name: copy pm_pcsgen input file and substitute variables
   template:
     src: "{{ pcsgen_csv }}"
-    dest: "/var/tmp/{{ pcsgen_basename }}"
+    dest: "{{ pcsgen_workdir | default('/var/tmp', true) }}/{{ pcsgen_basename }}"
 
 - name: generate PCS/CIB configuration with pm_pcsgen
   shell: pm_pcsgen {{ pcsgen_basename }}
   args:
-    chdir: /var/tmp/
+    chdir: "{{ pcsgen_workdir | default('/var/tmp', true) }}"
 
 ### PG-REX: cib-push is done by pg-rex_operation_tools_script
 #- name: make sure Pacemaker is running
@@ -41,5 +41,5 @@
 #- name: apply CIB resource configuration to the cluster
 #  shell: pcs cluster cib-push {{ pcsgen_cib }} --config
 #  args:
-#    chdir: /var/tmp/
+#    chdir: "{{ pcsgen_workdir | default('/var/tmp', true) }}"
 #  tags: cib-push

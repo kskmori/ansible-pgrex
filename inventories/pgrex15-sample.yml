@@ -52,6 +52,7 @@ hacluster_pgrex:
     # pm_pcsgen resource configuration
     # pcsgen_cvs - relative path from ansible-pgrex for running from import_playbook
     pcsgen_csv: "{{ playbook_dir }}/pm_pcsgen-config/PG-REX15-pm_pcsgen_sample.csv"
+    pcsgen_workdir: "/root/"
     ipaddr: { ip: 192.168.100.131, nic: enp2s0, cidr_netmask: 24 }
     ipaddr_standby: { ip: 192.168.100.132, nic: enp2s0, cidr_netmask: 24 }
     ipaddr_replication: { ip: 192.168.110.131, nic: enp5s0, cidr_netmask: 24 }
@@ -62,8 +63,6 @@ hacluster_pgrex:
       psql:  /usr/pgsql-15/bin/psql
       pgdata: "{{ PGDATA }}"
       pgport: "{{ PGPORT }}"
-
-
 
 ### ansible-virtualbmc
 hacluster_vbmc:
