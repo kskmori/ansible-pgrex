@@ -5,7 +5,7 @@ callback_result_format = yaml
 gathering = smart
 retry_files_enabled = False
 
-#inventory = ./inventories/hosts-sample.yml
+#inventory = ./inventories/pgrex-sample.yml
 
 
 ## enable this option on Cygwin environment
