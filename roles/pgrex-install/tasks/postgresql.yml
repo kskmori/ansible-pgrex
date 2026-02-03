@@ -12,7 +12,7 @@
 
 - name: make sure the minor revision of PostgreSQL
   set_fact:
-    pg_rev: '16.2-1PGDG.rhel9'
+    pg_rev: '17.7-1PGDG.rhel9'
   when: pg_rev is not defined
 - name: extract major version number of PostgreSQL
   set_fact:
@@ -20,7 +20,7 @@
 - name: make sure pg_rev format is valid
   fail:
     msg: |
-      'pg_rev' format must look like '16.2-1PGDG.rhel9'
+      'pg_rev' format must look like '17.7-1PGDG.rhel9'
       Hint - the format has been changed so that it must contains rhel revision
   when: '"rhel" not in pg_rev'
 
