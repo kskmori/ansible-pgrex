@@ -6,7 +6,7 @@
   tasks:
     - name: make sure the package revision of PostgreSQL
       set_fact:
-        pg_rev: '15.8-1PGDG.rhel8'
+        pg_rev: '16.2-1PGDG.rhel9'
       when: pg_rev is not defined
       tags: postgresql
     - name: make sure pg_rev format is valid
@@ -46,7 +46,8 @@
     - name: specify the release package of the PG-REX tools
       set_fact:
         #PG_REX: { tag: "PG-REX_15_4", package: "pg-rex15-4.0-1.tar.gz" }
-        PG_REX: { tag: "PG-REX_15_5", package: "pg-rex15-5.0-1.tar.gz" }
+        #PG_REX: { tag: "PG-REX_15_5", package: "pg-rex15-5.0-1.tar.gz" }
+        PG_REX: { tag: "PG-REX_16_5", package: "pg-rex16-5.0-1-tar.gz" }
       tags: pg-rex, extract
 
     - name: Download the pg-rex package

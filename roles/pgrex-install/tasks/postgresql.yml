@@ -12,7 +12,7 @@
 
 - name: make sure the minor revision of PostgreSQL
   set_fact:
-    pg_rev: '15.8-1PGDG'
+    pg_rev: '16.2-1PGDG.rhel9'
   when: pg_rev is not defined
 - name: extract major version number of PostgreSQL
   set_fact:
@@ -20,7 +20,7 @@
 - name: make sure pg_rev format is valid
   fail:
     msg: |
-      'pg_rev' format must look like '15.8-1PGDG.rhel8'
+      'pg_rev' format must look like '16.2-1PGDG.rhel9'
       Hint - the format has been changed so that it must contains rhel revision
   when: '"rhel" not in pg_rev'
 
@@ -52,18 +52,20 @@
   become: yes
   become_user: postgres
   lineinfile:
-    dest="/var/lib/pgsql/.bash_profile"
+    dest="/var/lib/pgsql/.pgsql_profile"
     regexp="^export PATH=/usr/pgsql-{{ pg_major }}/bin:\$PATH"
     line="export PATH=/usr/pgsql-{{ pg_major }}/bin:$PATH"
+    create=true
     state=present
 
 - name: add PGDATA to postgres user environment
   become: yes
   become_user: postgres
   lineinfile:
-    dest="/var/lib/pgsql/.bash_profile"
+    dest="/var/lib/pgsql/.pgsql_profile"
     regexp="^export PGDATA="
     line="export PGDATA={{ PGDATA }}"
+    create=true
     state=present
   
 ### Prepare DB directories
@@ -88,6 +90,7 @@
       line="{{ item.key }} = {{ item.value }}"
     with_items:
       - { key: "listen_addresses", value: "'*'" }
+      - { key: "superuser_reserved_connections", value: "10" }
       - { key: "password_encryption", value: "scram-sha-256" }
       - { key: "wal_level", value: "replica" }
       - { key: "synchronous_commit", value: "on" }

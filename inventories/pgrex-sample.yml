@@ -4,9 +4,10 @@ all:
     HACLUSTER_PASSWORD: pacemaker
     CLUSTER_NAME: pgrex_cluster
     FENCE_AGENTS: [fence_ipmilan]
+    pm_extra_tools: 1.6-1.el9
 
     ### ansible-postgresql-shared
-    pg_rev: '15.8-1PGDG.rhel8'
+    pg_rev: '16.2-1PGDG.rhel9'
 
     ### ansible-virtualbmc
     # Hypervisor type
@@ -51,7 +52,7 @@ hacluster_pgrex:
     REPPASSWD: reppasswd
     # pm_pcsgen resource configuration
     # pcsgen_cvs - relative path from ansible-pgrex for running from import_playbook
-    pcsgen_csv: "{{ playbook_dir }}/pm_pcsgen-config/PG-REX15-pm_pcsgen_sample.csv"
+    pcsgen_csv: "{{ playbook_dir }}/pm_pcsgen-config/PG-REX16-pm_pcsgen_sample.csv"
     pcsgen_workdir: "/root/"
     ipaddr: { ip: 192.168.100.131, nic: enp2s0, cidr_netmask: 24 }
     ipaddr_standby: { ip: 192.168.100.132, nic: enp2s0, cidr_netmask: 24 }
@@ -59,8 +60,8 @@ hacluster_pgrex:
     ping:   { host_list: 192.168.100.1 }
     storage_mon: { drives: "/dev/vda" }
     pgsql:
-      pgctl: /usr/pgsql-15/bin/pg_ctl
-      psql:  /usr/pgsql-15/bin/psql
+      pgctl: /usr/pgsql-16/bin/pg_ctl
+      psql:  /usr/pgsql-16/bin/psql
       pgdata: "{{ PGDATA }}"
       pgport: "{{ PGPORT }}"
 

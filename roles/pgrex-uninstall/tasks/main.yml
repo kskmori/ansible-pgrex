@@ -6,7 +6,7 @@
 
 
 # remove customized file under postgres user
-- file: path=/var/lib/pgsql/.bash_profile state=absent
+- file: path=/var/lib/pgsql/.pgsql_profile state=absent
 - file: path=/var/lib/pgsql/.pgpass state=absent
 
 - name: uninstall PG-REX operation tools
@@ -39,3 +39,18 @@
   register: result
   changed_when: '"NOT_ENABLED" not in result.stderr'
   when: firewalld_state.rc == 0
+
+### uninstall PostgreSQL database
+- name: extract major version number of PostgreSQL
+  set_fact:
+    pg_major: "{{ pg_rev | regex_replace('^(\\d*)\\..*', '\\1') }}"
+
+- name: uninstall PostgreSQL packages
+  yum:
+    name:
+      - postgresql{{ pg_major }}-libs-{{ pg_rev }}
+      - postgresql{{ pg_major }}-{{ pg_rev }}
+      - postgresql{{ pg_major }}-server-{{ pg_rev }}
+      - postgresql{{ pg_major }}-docs-{{ pg_rev }}
+      - postgresql{{ pg_major }}-contrib-{{ pg_rev }}
+    state: absent
