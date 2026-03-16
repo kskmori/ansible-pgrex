@@ -1,6 +1,8 @@
 - hosts: hacluster_pgrex
   become: true
   max_fail_percentage: 0
+  vars_files:
+    - vars/pgrex-version.yml
 
   roles:
     - pgrex-install

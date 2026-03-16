@@ -1,0 +1,23 @@
+## PostgreSQL version
+#  can be overwrited in the inventory file
+pg_rev: '17.6-1PGDG.rhel9'
+
+## PG-REX required packages for each versions
+PG_REX_VERSIONS:
+  PG-REX_17_1:
+    tag: "PG-REX_17_1"
+    package: "pg-rex17-1.0-1.tar.gz"
+    rpms:
+      - Net_OpenSSH-0.62-1.el9.x86_64.rpm
+      - pg-rex_operation_tools_script-17.0-1.el9.noarch.rpm
+  PG-REX_17_3:
+    tag: "PG-REX_17_3"
+    #package: "pg-rex17-3.0-1.tar.gz" # no all in one package available for PG-REX_17_3
+    rpms:
+      - Net_OpenSSH-0.62-1.el9.x86_64.rpm
+      - pg-rex_operation_tools_script-17.0-1.el9.noarch.rpm
+
+# use the current PG-REX version
+PG_REX: "{{ PG_REX_VERSIONS['PG-REX_17_3'] }}"
+
+

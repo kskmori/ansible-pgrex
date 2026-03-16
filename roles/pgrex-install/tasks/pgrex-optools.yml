@@ -1,11 +1,10 @@
 ### Install PG-REX operation tools
+# PG_REX.rpms variable should be defined in {{ playbook_dir }}/vars/pgrex-version.yml
 - name: copy PG-REX operation tools to the node
   copy:
     src="{{ item }}"
     dest="/var/tmp/"
-  with_items:
-    - Net_OpenSSH-0.62-1.el9.x86_64.rpm
-    - pg-rex_operation_tools_script-17.0-1.el9.noarch.rpm
+  with_items: "{{ PG_REX.rpms }}"
   register: rc_copy
 
 - name: install dependent packages required by pg-rex_operation_tools
