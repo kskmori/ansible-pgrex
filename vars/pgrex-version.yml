@@ -1,6 +1,6 @@
 ## PostgreSQL version
-#  can be overwrited in the inventory file
-pg_rev: '17.6-1PGDG.rhel9'
+#  can be overwritten by "pg_rev:" variable in the inventory file
+pg_rev_default: '17.6-1PGDG.rhel9'
 
 ## PG-REX required packages for each versions
 PG_REX_VERSIONS:

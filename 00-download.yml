@@ -6,6 +6,10 @@
     - vars/pgrex-version.yml
 
   tasks:
+    - name: make sure the minor revision of PostgreSQL
+      set_fact:
+        pg_rev: "{{ pg_rev | default(pg_rev_default) }}"
+      tags: always
     - name: extract major version number of PostgreSQL
       set_fact:
         pg_major: "{{ pg_rev | regex_replace('^(\\d*)\\..*', '\\1') }}"

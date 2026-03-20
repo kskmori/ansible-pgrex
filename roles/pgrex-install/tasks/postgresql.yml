@@ -12,17 +12,10 @@
 
 - name: make sure the minor revision of PostgreSQL
   set_fact:
-    pg_rev: '17.7-1PGDG.rhel9'
-  when: pg_rev is not defined
+    pg_rev: "{{ pg_rev | default(pg_rev_default) }}"
 - name: extract major version number of PostgreSQL
   set_fact:
     pg_major: "{{ pg_rev | regex_replace('^(\\d*)\\..*', '\\1') }}"
-- name: make sure pg_rev format is valid
-  fail:
-    msg: |
-      'pg_rev' format must look like '17.7-1PGDG.rhel9'
-      Hint - the format has been changed so that it must contains rhel revision
-  when: '"rhel" not in pg_rev'
 
 - name: copy PostgreSQL packages to the node
   copy:
