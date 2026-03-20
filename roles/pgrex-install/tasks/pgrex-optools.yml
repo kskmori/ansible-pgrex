@@ -1,17 +1,36 @@
 ### Install PG-REX operation tools
-# PG_REX.rpms variable should be defined in {{ playbook_dir }}/vars/pgrex-version.yml
+
+## install dependent packages required by pg-rex_operation_tools
+# PG_REX.rpm_iotty variable is defined in {{ playbook_dir }}/vars/pgrex-version.yml
+- block:
+  - name: copy locally downloaded {{ PG_REX.rpm_iotty }}
+    copy:
+      src: "{{ PG_REX.rpm_iotty }}"
+      dest: "/var/tmp/"
+  - name: install locally downloaded {{ PG_REX.rpm_iotty }}
+    yum:
+      name: "/var/tmp/{{ PG_REX.rpm_iotty }}"
+      state: present
+  when: ansible_facts['distribution'] == "RedHat" or USE_DOWNLOADED_IOTTY is defined
+- name: install {{ PG_REX.rpm_iotty }} from the repository
+  yum:
+    name: ["perl-IO-Tty"]
+    enablerepo: crb
+    state: present
+  when: not (ansible_facts['distribution'] == "RedHat" or USE_DOWNLOADED_IOTTY is defined)
+
+- name: install other dependent packages from the repository
+  yum:
+    name: ["perl-File-Compare"]
+    state: present
+
+# PG_REX.rpms variable is defined in {{ playbook_dir }}/vars/pgrex-version.yml
 - name: copy PG-REX operation tools to the node
   copy:
     src="{{ item }}"
     dest="/var/tmp/"
   with_items: "{{ PG_REX.rpms }}"
   register: rc_copy
-
-- name: install dependent packages required by pg-rex_operation_tools
-  yum:
-    name: ["perl-IO-Tty", "perl-File-Compare"]
-    enablerepo: crb
-    state: present
 
 - name: install PG-REX operation tools
   yum:
@@ -32,12 +51,12 @@
   with_items:
     - { key: "D_LAN_IPAddress",
         value: "\
-          {{ ansible_play_hosts | map('extract', hostvars, 'replication_addr') | join(', ') }}"
+          {{ groups['hacluster_pgrex'] | map('extract', hostvars, 'replication_addr') | join(', ') }}"
       }
     - { key: "IC_LAN_IPAddress",
         value: "\
-          ({{ ansible_play_hosts | map('extract', hostvars, 'link0_addr') | join(', ') }}), \
-          ({{ ansible_play_hosts | map('extract', hostvars, 'link1_addr') | join(', ') }})"
+          ({{ groups['hacluster_pgrex'] | map('extract', hostvars, 'link0_addr') | join(', ') }}), \
+          ({{ groups['hacluster_pgrex'] | map('extract', hostvars, 'link1_addr') | join(', ') }})"
       }
     - { key: "Archive_dir", value: "{{ PGDATA_PREFIX }}/pgarch/arc1" }
     - { key: "IPADDR_STANDBY", value: "enable" }
